@@ -10,15 +10,19 @@
 #import "UIImage+DJResize.h"
 #define adjustingFocus @"adjustingFocus"
 #define ShowAlert(title) [[[UIAlertView alloc] initWithTitle:@"提示" message:title delegate:nil cancelButtonTitle:@"确定" otherButtonTitles:nil, nil] show]
-@interface DJCameraManager ()
+@interface DJCameraManager () <AVCaptureVideoDataOutputSampleBufferDelegate,AVCaptureMetadataOutputObjectsDelegate>
 @property (nonatomic) dispatch_queue_t sessionQueue;
 @property (nonatomic, strong) AVCaptureVideoPreviewLayer *previewLayer;
 @property (nonatomic, strong) AVCaptureDeviceInput *inputDevice;
 @property (nonatomic, strong) AVCaptureStillImageOutput *stillImageOutput;
+@property (nonatomic, strong) AVCaptureMetadataOutput *metadataOutput;
 @property (nonatomic, copy) void (^finishBlock)();
 @property (nonatomic, strong) UIImageView *focusImageView;
+@property (nonatomic, strong) UIImageView *faceImageView;
 @property (nonatomic, assign) BOOL isManualFocus;//判断是否手动对焦
+@property (nonatomic, assign) BOOL isStartFaceRecognition;
 @end
+
 @implementation DJCameraManager
 - (void)dealloc
 {
@@ -33,49 +37,88 @@
 {
     self = [super init];
     if (self) {
-        self.session = [[AVCaptureSession alloc] init];
-        self.previewLayer = [[AVCaptureVideoPreviewLayer alloc] initWithSession:self.session];
-        self.previewLayer.videoGravity = AVLayerVideoGravityResizeAspectFill;
-        
+        [self setup];
     }
     return self;
 }
 
-
-- (void)configureWithParentLayer:(UIView *)parent
+- (instancetype)initWithParentView:(UIView *)view
 {
-    
-    if (!parent) {
-        ShowAlert(@"请加入负载视图");
-        return;
+    self = [super init];
+    if (self) {
+        [self setup];
+        [self configureWithParentLayer:view];
     }
-    
-    self.previewLayer.frame = parent.bounds;
-    [parent.layer addSublayer:self.previewLayer];
+    return self;
+}
+- (void)setup
+{
+    self.session = [[AVCaptureSession alloc] init];
+    self.previewLayer = [[AVCaptureVideoPreviewLayer alloc] initWithSession:self.session];
+    self.previewLayer.videoGravity = AVLayerVideoGravityResizeAspectFill;
     //对焦队列
     [self createQueue];
     //加入输入设备（前置或后置摄像头）
     [self addVideoInputFrontCamera:NO];
     //加入输出设备
     [self addStillImageOutput];
-    //加入对焦框
-    [self initfocusImageWithParent:parent];
     //对焦MVO
     [self setFocusObserver:YES];
-    [self.session startRunning];
 }
+
+- (void)configureWithParentLayer:(UIView *)parent
+{
+    if (!parent) {
+        ShowAlert(@"请加入负载视图");
+        return;
+    }
+    self.previewLayer.frame = parent.bounds;
+    [parent.layer addSublayer:self.previewLayer];
+    //加入对焦框
+    [self initfocusImageWithParent:parent];
+    //加入脸部识别框
+    [self initFaceImageWithParent:parent];
+    [self.session startRunning];
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        self.isStartFaceRecognition = YES;
+    });
+}
+
 /**
  *  对焦的框
  */
 - (void)initfocusImageWithParent:(UIView *)view;
 {
-    UIImageView *imgView = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"touch_focus_x.png"]];
-    imgView.alpha = 0;
-    if (view.superview!=nil) {
-        [view.superview addSubview:imgView];
+    if (self.focusImageView) {
+        return;
     }
-    self.focusImageView = imgView;
+    self.focusImageView = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"touch_focus_x.png"]];
+    self.focusImageView.alpha = 0;
+    if (view.superview!=nil) {
+        [view.superview addSubview:self.focusImageView];
+    }else{
+        self.focusImageView = nil;
+    }
 }
+/**
+ *  脸部识别的框
+ *
+ *  @param view
+ */
+- (void)initFaceImageWithParent:(UIView *)view;
+{
+    if (self.faceImageView) {
+        return;
+    }
+    self.faceImageView = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"face.png"]];
+    self.faceImageView.alpha = 0;
+    if (view.superview) {
+        [view.superview addSubview:self.faceImageView];
+    }else{
+        self.faceImageView = nil;
+    }
+}
+
 /**
  *  创建一个队列，防止阻塞主线程
  */
@@ -148,10 +191,20 @@
     
     self.stillImageOutput = tmpOutput;
     
-    AVCaptureVideoDataOutput *dataOutput = [[AVCaptureVideoDataOutput alloc] init];
-    if ([self.session canAddOutput:dataOutput]) {
-        NSLog(@"能加入");
-        [self.session addOutput:dataOutput];
+//    AVCaptureVideoDataOutput *dataOutput = [[AVCaptureVideoDataOutput alloc] init];
+//    if ([self.session canAddOutput:dataOutput]) {
+//        [self.session addOutput:dataOutput];
+//        dispatch_queue_t cameraQueue;
+//        cameraQueue = dispatch_queue_create("cameraQueue", DISPATCH_QUEUE_SERIAL);
+//        [dataOutput setSampleBufferDelegate:self queue:cameraQueue];
+//    }
+    
+    AVCaptureMetadataOutput *metadataOutput = [[AVCaptureMetadataOutput alloc] init];
+    if ([_session canAddOutput:metadataOutput]) {
+        [_session addOutput:metadataOutput];
+        [metadataOutput setMetadataObjectTypes:@[AVMetadataObjectTypeFace]];
+        [metadataOutput setMetadataObjectsDelegate:self queue:dispatch_get_main_queue()];
+        self.metadataOutput = metadataOutput;
     }
 }
 /**
@@ -416,8 +469,35 @@
     
     return pointOfInterest;
 }
-
-
+/**
+ *  人脸框的动画
+ *
+ *  @param rect 
+ */
+- (void)showFaceImageWithFrame:(CGRect)rect
+{
+    if (self.isStartFaceRecognition) {
+        self.isStartFaceRecognition = NO;
+        self.faceImageView.frame = CGRectMake(rect.origin.y * self.previewLayer.frame.size.width-10, rect.origin.x * self.previewLayer.frame.size.height - 20, rect.size.width * self.previewLayer.frame.size.width * 2, rect.size.height * self.previewLayer.frame.size.height);
+        
+        self.faceImageView.transform = CGAffineTransformMakeScale(1.5, 1.5);
+        __weak typeof(self) weak = self;
+        [UIView animateWithDuration:0.3f animations:^{
+            weak.faceImageView.alpha = 1.f;
+            weak.faceImageView.transform = CGAffineTransformMakeScale(1.0, 1.0);
+        } completion:^(BOOL finished) {
+            [UIView animateWithDuration:2.f animations:^{
+                weak.faceImageView.alpha = 0.f;
+            } completion:^(BOOL finished) {
+                if (weak.faceRecognitonCallBack) {
+                    weak.faceRecognitonCallBack(weak.faceImageView.frame);
+                }
+                weak.isStartFaceRecognition = YES;
+                
+            }];
+        }];
+    }
+}
 
 /**
  *  查找摄像头连接设备
@@ -449,9 +529,7 @@
             [device addObserver:self forKeyPath:adjustingFocus options:NSKeyValueObservingOptionNew|NSKeyValueObservingOptionOld context:nil];
         }else{
             [device removeObserver:self forKeyPath:adjustingFocus context:nil];
-            
         }
-        
     }else{
         ShowAlert(@"你的设备没有照相机");
     }
@@ -469,11 +547,70 @@
                 [self.delegate cameraDidStareFocus];
             }
         }else{
-           
             if ([self.delegate respondsToSelector:@selector(cameraDidFinishFocus)]) {
                 [self.delegate cameraDidFinishFocus];
             }
         }
     }
 }
+#pragma -mark AVCaptureMetadataOutputObjectsDelegate
+- (void)captureOutput:(AVCaptureOutput *)captureOutput didOutputMetadataObjects:(NSArray *)metadataObjects fromConnection:(AVCaptureConnection *)connection
+{
+    if (self.canFaceRecognition) {
+        for(AVMetadataObject *metadataObject in metadataObjects) {
+            if([metadataObject.type isEqualToString:AVMetadataObjectTypeFace]) {
+                [self showFaceImageWithFrame:metadataObject.bounds];
+            }
+        }
+    }
+}
+
+/*
+#pragma -mark AVCaptureVideoDataOutputSampleBufferDelegate
+- (void)captureOutput:(AVCaptureOutput *)captureOutput didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer fromConnection:(AVCaptureConnection *)connection
+{
+//    if (self.isStartFaceRecognition) {
+//        UIImage *curImage = [self getSampleBufferImageWithSampleBuffer:sampleBuffer];
+//        CIContext *context = [CIContext contextWithOptions:@{kCIContextUseSoftwareRenderer:@YES}];
+//        CIDetector *detector = [CIDetector detectorOfType:CIDetectorTypeFace context:context options:@{CIDetectorAccuracy:CIDetectorAccuracyHigh}];
+//        
+//    }
+    
+}
+
+- (UIImage *)getSampleBufferImageWithSampleBuffer:(CMSampleBufferRef)sampleBuffer
+{
+    CVImageBufferRef buffer;
+    buffer = CMSampleBufferGetImageBuffer(sampleBuffer);
+    
+    CVPixelBufferLockBaseAddress(buffer, 0);
+    
+    //从 CVImageBufferRef 取得影像的细部信息
+    uint8_t *base;
+    size_t width, height, bytesPerRow;
+    base = CVPixelBufferGetBaseAddress(buffer);
+    width = CVPixelBufferGetWidth(buffer);
+    height = CVPixelBufferGetHeight(buffer);
+    bytesPerRow = CVPixelBufferGetBytesPerRow(buffer);
+    
+    //利用取得影像细部信息格式化 CGContextRef
+    CGColorSpaceRef colorSpace;
+    CGContextRef cgContext;
+    colorSpace = CGColorSpaceCreateDeviceRGB();
+    cgContext = CGBitmapContextCreate(base, width, height, 8, bytesPerRow, colorSpace, kCGBitmapByteOrder32Little | kCGImageAlphaPremultipliedFirst);
+    CGColorSpaceRelease(colorSpace);
+    
+    //透过 CGImageRef 将 CGContextRef 转换成 UIImage
+    CGImageRef cgImage;
+    UIImage *image;
+    cgImage = CGBitmapContextCreateImage(cgContext);
+    image = [UIImage imageWithCGImage:cgImage];
+    CGImageRelease(cgImage);
+    CGContextRelease(cgContext);
+    
+    CVPixelBufferUnlockBaseAddress(buffer, 0);
+    
+    return image;
+}
+ */
 @end

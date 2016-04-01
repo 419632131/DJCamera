@@ -59,10 +59,14 @@
     
     UIView *pickView = [[UIView alloc]initWithFrame:CGRectMake(0, 20, AppWidth, AppWidth+100)];
     [self.view addSubview:pickView];
-    DJCameraManager *manager = [[DJCameraManager alloc] init];
     // 传入View的frame 就是摄像的范围
-    [manager configureWithParentLayer:pickView];
+    DJCameraManager *manager = [[DJCameraManager alloc] initWithParentView:pickView];
     manager.delegate = self;
+    manager.canFaceRecognition = YES;
+    [manager setFaceRecognitonCallBack:^(CGRect faceFrame) {
+        NSLog(@"你的脸在%@",NSStringFromCGRect(faceFrame));
+    }];
+    
     self.manager = manager;
 }
 
