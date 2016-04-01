@@ -1,7 +1,7 @@
 #一个AVFoundation的封装，开发者利用封装好的manager可随意自定义自己想要的UI照相机。
 
 ##4月1号更新功能：人脸识别
-设置是否使用人脸识别：
+设置是否使用人脸识别：*
 manager.canFaceRecognition = YES;
 开启脸部位置监听：
 [manager setFaceRecognitonCallBack:^(CGRect faceFrame) {
