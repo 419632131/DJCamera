@@ -12,13 +12,13 @@ manager.canFaceRecognition = YES;
   DJCameraManager *manager = [[DJCameraManager alloc] initWithParentView:pickView];
   pickView 是你要装载这个摄像视图的View 它的frame就是摄像范围。
 添加摄像范围到View
-//- (void)configureWithParentLayer:(UIView *)parent;
+/- (void)configureWithParentLayer:(UIView *)parent;
 切换前后镜
-//- (void)switchCamera:(BOOL)isFrontCamera didFinishChanceBlock:(void(^)())block;
+/- (void)switchCamera:(BOOL)isFrontCamera didFinishChanceBlock:(void(^)())block;
 拍照
-//- (void)takePhotoWithImageBlock:(void(^)(UIImage *originImage,UIImage *scaledImage,UIImage *croppedImage))block;  切换闪光灯模式
-//- (void)switchFlashMode:(UIButton*)sender;
+/- (void)takePhotoWithImageBlock:(void(^)(UIImage *originImage,UIImage *scaledImage,UIImage *croppedImage))block;  切换闪光灯模式
+/- (void)switchFlashMode:(UIButton*)sender;
 点击对焦
-//- (void)focusInPoint:(CGPoint)devicePoint;
+/- (void)focusInPoint:(CGPoint)devicePoint;
 开启对焦监听 默认YES
-//- (void)setFocusObserver:(BOOL)yes;
+/- (void)setFocusObserver:(BOOL)yes;
