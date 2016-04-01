@@ -15,7 +15,7 @@
 @property (nonatomic, strong) AVCaptureVideoPreviewLayer *previewLayer;
 @property (nonatomic, strong) AVCaptureDeviceInput *inputDevice;
 @property (nonatomic, strong) AVCaptureStillImageOutput *stillImageOutput;
-@property (nonatomic, copy) void (^block)();
+@property (nonatomic, copy) void (^finishBlock)();
 @property (nonatomic, strong) UIImageView *focusImageView;
 @property (nonatomic, assign) BOOL isManualFocus;//判断是否手动对焦
 @end
@@ -256,7 +256,7 @@
         return;
     }
     if (block) {
-        self.block = [block copy];
+        self.finishBlock = [block copy];
     }
     CABasicAnimation *caAnimation = [CABasicAnimation animationWithKeyPath:@"transform.rotation.y"];
 //    caAnimation.removedOnCompletion = NO;
@@ -282,8 +282,8 @@
 }
 - (void)animationDidStop:(CAAnimation *)anim finished:(BOOL)flag
 {
-    if (self.block) {
-        self.block();
+    if (self.finishBlock) {
+        self.finishBlock();
     }
 }
 /**
