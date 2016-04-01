@@ -9,7 +9,9 @@ manager.canFaceRecognition = YES;
 开启脸部位置监听：
 
 [manager setFaceRecognitonCallBack:^(CGRect faceFrame) {
+
       NSLog(@"你的脸在%@",NSStringFromCGRect(faceFrame));
+      
  }];
 
 ##初始化：
