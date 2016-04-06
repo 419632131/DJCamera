@@ -10,7 +10,7 @@ manager.canFaceRecognition = YES;
 
 [manager setFaceRecognitonCallBack:^(CGRect faceFrame) {
 
-      NSLog(@"你的脸在%@",NSStringFromCGRect(faceFrame));
+ NSLog(@"你的脸在%@",NSStringFromCGRect(faceFrame));
       
  }];
 
@@ -43,3 +43,5 @@ manager.canFaceRecognition = YES;
 开启对焦监听 默认YES
 
 \- (void)setFocusObserver:(BOOL)yes;
+
+###喜欢的朋友帮忙Star一下哦，射射！
