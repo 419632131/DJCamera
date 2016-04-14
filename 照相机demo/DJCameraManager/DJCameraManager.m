@@ -56,6 +56,7 @@
     self.session = [[AVCaptureSession alloc] init];
     self.previewLayer = [[AVCaptureVideoPreviewLayer alloc] initWithSession:self.session];
     self.previewLayer.videoGravity = AVLayerVideoGravityResizeAspectFill;
+    
     //对焦队列
     [self createQueue];
     //加入输入设备（前置或后置摄像头）
@@ -72,6 +73,8 @@
         ShowAlert(@"请加入负载视图");
         return;
     }
+    
+    
     self.previewLayer.frame = parent.bounds;
     [parent.layer addSublayer:self.previewLayer];
     //加入对焦框
@@ -181,6 +184,7 @@
 - (void)addStillImageOutput
 {
     
+    
     AVCaptureStillImageOutput *tmpOutput = [[AVCaptureStillImageOutput alloc] init];
     NSDictionary *outputSettings = [[NSDictionary alloc] initWithObjectsAndKeys:AVVideoCodecJPEG,AVVideoCodecKey,nil];//输出jpeg
     tmpOutput.outputSettings = outputSettings;
@@ -198,6 +202,13 @@
 //        cameraQueue = dispatch_queue_create("cameraQueue", DISPATCH_QUEUE_SERIAL);
 //        [dataOutput setSampleBufferDelegate:self queue:cameraQueue];
 //    }
+    
+    AVCaptureConnection *videoConnection = [self findVideoConnection];
+    if (!videoConnection) {
+        ShowAlert(@"您的设备没有照相机");
+        return;
+    }
+    
     
     AVCaptureMetadataOutput *metadataOutput = [[AVCaptureMetadataOutput alloc] init];
     if ([_session canAddOutput:metadataOutput]) {

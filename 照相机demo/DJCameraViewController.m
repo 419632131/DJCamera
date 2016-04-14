@@ -8,7 +8,6 @@
 
 #import "DJCameraViewController.h"
 #import "PhotoViewController.h"
-#import <AVFoundation/AVFoundation.h>
 #import "UIButton+DJBlock.h"
 #import "DJCameraManager.h"
 #define WS(weakSelf)  __weak __typeof(&*self)weakSelf = self;
