@@ -20,6 +20,11 @@
 @property (nonatomic,strong) AVCaptureSession *session;
 @property (nonatomic,assign) BOOL canFaceRecognition;//default is No ,是否可以对焦人脸；
 @property (nonatomic,copy) void (^faceRecognitonCallBack)(CGRect);
+
+
+//检查是否有授权相机
++ (BOOL)checkAuthority;
+
 - (instancetype)initWithParentView:(UIView *)view;
 - (void)setFaceRecognitonCallBack:(void (^)(CGRect faceFrame))faceRecognitonCallBack;
 /**

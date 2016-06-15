@@ -8,6 +8,7 @@
 
 #import "ViewController.h"
 #import "DJCameraViewController.h"
+#import "DJCameraManager.h"
 @interface ViewController ()
 
 @end
@@ -19,9 +20,12 @@
     // Do any additional setup after loading the view.
 }
 - (IBAction)show:(id)sender {
-    DJCameraViewController *VC = [DJCameraViewController new];
-    
-    [self presentViewController:VC animated:YES completion:nil];
+    if ([DJCameraManager checkAuthority]) {
+        DJCameraViewController *VC = [DJCameraViewController new];
+        [self presentViewController:VC animated:YES completion:nil];
+    }else{
+        NSLog(@"请在系统中打开相机权限");
+    }
 }
 
 - (void)didReceiveMemoryWarning {

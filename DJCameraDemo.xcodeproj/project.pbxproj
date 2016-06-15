@@ -340,6 +340,7 @@
 				TargetAttributes = {
 					96EE1EC61C43406A003C0EBC = {
 						CreatedOnToolsVersion = 7.2;
+						DevelopmentTeam = THGS2V3HP4;
 					};
 					96EE1EDF1C43406A003C0EBC = {
 						CreatedOnToolsVersion = 7.2;
@@ -581,11 +582,14 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				INFOPLIST_FILE = "照相机demo/Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 7.1;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
-				PRODUCT_BUNDLE_IDENTIFIER = com.cocas.DJCameraDemo;
+				PRODUCT_BUNDLE_IDENTIFIER = com.cocas.DJCameraDem;
 				PRODUCT_NAME = DJCameraDemo;
+				PROVISIONING_PROFILE = "";
 			};
 			name = Debug;
 		};
@@ -593,11 +597,14 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				INFOPLIST_FILE = "照相机demo/Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 7.1;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
-				PRODUCT_BUNDLE_IDENTIFIER = com.cocas.DJCameraDemo;
+				PRODUCT_BUNDLE_IDENTIFIER = com.cocas.DJCameraDem;
 				PRODUCT_NAME = DJCameraDemo;
+				PROVISIONING_PROFILE = "";
 			};
 			name = Release;
 		};

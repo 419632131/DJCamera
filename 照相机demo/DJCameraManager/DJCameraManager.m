@@ -531,6 +531,19 @@
     }
     return videoConnection;
 }
+
+/*
+ 检查是否有相机权限
+ */
++ (BOOL)checkAuthority
+{
+    NSString *mediaType = AVMediaTypeVideo;
+    AVAuthorizationStatus authStatus = [AVCaptureDevice authorizationStatusForMediaType:mediaType];
+    if(authStatus == AVAuthorizationStatusRestricted || authStatus == AVAuthorizationStatusDenied){
+        return NO;
+    }
+    return YES;
+}
 #pragma -mark Observer
 - (void)setFocusObserver:(BOOL)yes
 {

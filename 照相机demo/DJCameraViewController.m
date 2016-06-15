@@ -45,6 +45,8 @@
 }
 - (void)viewDidLoad {
     [super viewDidLoad];
+
+    
     [self initLayout];
     [self initPickButton];
     [self initFlashButton];
